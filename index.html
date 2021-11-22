@@ -1,0 +1,343 @@
+<html>
+
+<head>
+    <script type="text/javascript" src="js/processing.js"></script>
+</head>
+
+<body>
+    <script type="text/processing">
+        sliderDesbloqueoN  sldr = new sliderDesbloqueoN();
+
+
+        void setup()
+        {
+          size(700, 700);
+          background(0);
+          
+          //sldr[0] = new sliderDesbloqueoN();
+          sldr.posicionSlider(0, 0, 300, 350);
+        }
+        void draw()
+        {
+          sldr.run();
+          //delay(100);
+        }
+        
+        void donde()
+        {
+          if( sldr.isOver()==true )
+          {
+            sldr.enableUnlockingGuide=false;
+          }
+          else
+          {
+            sldr.enableUnlockingGuide=true;
+          }
+          
+        }
+        
+        void mousePressed()
+        {
+          sldr.lock=sldr.isOver();
+          //donde();
+        }
+        
+        void mouseReleased()
+        {
+          sldr.lock=false;
+        }
+
+        class colourDegradationPoint
+        {
+          float x=0, y=0, finalDiameter=100, periodo=1000;
+          double tExpansion_1=0;
+          
+          boolean Ei=false, Ef=false;
+          
+          colourDegradationPoint(float x_, float y_, float finalDiameter_)
+          {
+            x=x_;
+            y=y_;
+            finalDiameter=finalDiameter_;
+          }
+          void run()
+          {
+            if( Ei )
+            {
+              if( (millis()-tExpansion_1)<=1000 )
+              {
+                fill(220, 10, 10, 200/2*cos(PI*(millis()-(int)tExpansion_1)/1000)+200/2);
+                ellipse(x, y, finalDiameter*(millis()-(int)tExpansion_1)/1000, finalDiameter*(millis()-(int)tExpansion_1)/1000);
+              }
+              if( (millis()-tExpansion_1)>1000 )
+              {
+                fill(220, 10, 10, 200);
+                ellipse(x, y, finalDiameter, finalDiameter);
+                //Ei=false;
+                Ef=true;
+              }
+            }
+            else
+            {
+              tExpansion_1=millis();
+            }
+          }
+          void reset()
+          {
+            Ei=false;
+            Ef=false;
+          }
+        }
+
+        class sliderDesbloqueoN
+        {
+          //atributos
+          public int x=0, y=0, w=300, h=350;
+          int radius=50;
+          int tLocked_1=0, tLockedDelayed_1=0, tGoBackLock_1=0, tGoBackLock=5000;
+          int periodoLocked=2000, corrimientoLocked=1000;
+          int periodoTransparenciaLocked=1000, corrimientoTransparenciaLocked=0;//el corrimiento de la trasparencia debe ser menor al corrimientoLocked que es el de la trayectoria
+          boolean enableUnlockingGuide=true;
+          int rFS=255, gFS=255, bFS=200, aFS=255;//red green blue alpha Fondo Slider
+          int rF=0, gF=0, bF=0, aF=127;//red green blue alpha Finger
+          
+          private boolean locked = true;
+          private boolean lock = false;//para retener la esfera del slider en el puntero del mouse
+          
+          byte seqUnlocking=1;
+          
+          double tExpansion_1=0;
+          
+          colourDegradationPoint[] cdp = new colourDegradationPoint[3]; 
+            
+          
+          sliderDesbloqueoN()
+          {
+            
+          }
+          
+          //modificadores
+          void posicionSlider(int _x, int _y, int _w, int _h)
+          {
+            x=_x; 
+            y=_y; 
+            w=_w;
+            h=_h;//0 0 300 350
+            cdp[0] = new colourDegradationPoint((x+w/2), (y+h)-radius/2, radius);
+            cdp[1] = new colourDegradationPoint((x+w/2), (y)+radius/2, radius);
+            cdp[2] = new colourDegradationPoint(x+w-radius/2, (y)+radius/2, radius);
+          }
+          //accesores
+          boolean isOver()
+          {
+            if( ((pow(mouseX-(x+radius/2),2)+pow(mouseY-((y+h)-radius/2),2))<=pow(radius/2,2)) )
+            {
+              rFS=255;
+              gFS=255;
+              bFS=200;
+              aFS=255;
+            }
+            else
+            {
+              rFS=200;
+              gFS=200;
+              bFS=80;
+              aFS=225;
+            }
+            if( locked )
+            {
+              if( lock )
+              {
+                enableUnlockingGuide=true;
+                return ((pow(mouseX-(x+radius/2),2)+pow(mouseY-((y+h)-radius/2),2))<=pow(radius/2,2)) || ((x + radius/2)<mouseX)&&(mouseX<(x + radius/2+(w)/2-radius/2))&&((y+h)-radius)<mouseY&&mouseY<((y+h)-radius+radius) || ((pow(mouseX-((x+w/2)),2)+pow(mouseY-((y+h)-radius/2),2))<=pow(radius/2,2)) || (((x+w/2) + radius/2-radius)<mouseX)&&(mouseX<((x+w/2) + radius/2))&&((y+h)-radius/2-(h-radius))<mouseY&&mouseY<((y+h)-radius/2) || ((pow(mouseX-((x+w/2)),2)+pow(mouseY-((y)+radius/2),2))<=pow(radius/2,2)) || (((x+w/2))<mouseX)&&(mouseX<((x+w/2)+(w)/2-radius/2))&&((y))<mouseY&&mouseY<((y)+radius) || ((pow(mouseX-(x+w-radius/2),2)+pow(mouseY-((y)+radius/2),2))<=pow(radius/2,2));
+              }
+              else
+              {
+                //enableUnlockingGuide=true;
+                return ((pow(mouseX-(x+radius/2),2)+pow(mouseY-((y+h)-radius/2),2))<=pow(radius/2,2));
+              }
+              
+            }
+            else
+            {
+              return false;
+            }
+            //if( ((pow(mouseX-(x+radius/2),2)+pow(mouseY-((y+h)-radius/2),2))<=pow(radius/2,2)) || ((x + radius/2)<mouseX)&&(mouseX<(x + radius/2+(w)/2-radius/2))&&((y+h)-radius)<mouseY&&mouseY<((y+h)-radius+radius) || ((pow(mouseX-((x+w/2)),2)+pow(mouseY-((y+h)-radius/2),2))<=pow(radius/2,2)) || (((x+w/2) + radius/2-radius)<mouseX)&&(mouseX<((x+w/2) + radius/2))&&((y+h)-radius/2-(h-radius))<mouseY&&mouseY<((y+h)-radius/2) || ((pow(mouseX-((x+w/2)),2)+pow(mouseY-((y)+radius/2),2))<=pow(radius/2,2)) || (((x+w/2))<mouseX)&&(mouseX<((x+w/2)+(w)/2-radius/2))&&((y))<mouseY&&mouseY<((y)+radius) || ((pow(mouseX-(x+w-radius/2),2)+pow(mouseY-((y)+radius/2),2))<=pow(radius/2,2)) )
+            //{
+            //  enableUnlockingGuide=false;
+            //  return true;
+            //}
+            //else
+            //{
+            //  enableUnlockingGuide=true;
+            //  return false;
+            //}
+          }
+          
+          //main o funciones paso por valor
+          public void run()
+          {
+            if( locked )
+            {
+              noStroke();
+              fill(127,0,0,10);
+              rect(x, y, w, h);
+              
+              //surco por donde debe pasar el puntero
+              fill(rFS, gFS, bFS, aFS); //red green blue alpha Fondo Slider
+              ellipse(x+radius/2, (y+h)-radius/2, radius, radius);
+              rect(x + radius/2, (y+h)-radius, (w)/2-radius/2, radius);
+              ellipse((x+w/2), (y+h)-radius/2, radius, radius);
+              rect((x+w/2) + radius/2, (y+h)-radius/2, -radius, -(h-radius));
+              ellipse((x+w/2), (y)+radius/2, radius, radius);
+              rect((x+w/2), (y), (w)/2-radius/2, radius);
+              ellipse(x+w-radius/2, (y)+radius/2, radius, radius);
+              
+              unlockingGuide();
+              if( lock )
+              {
+                enableUnlockingGuide=false;
+                fingerTracking();
+              }
+              else
+              {
+                cdp[0].reset();
+                cdp[1].reset();
+                //cdp[2].reset();
+                enableUnlockingGuide=true;
+                
+                if( seqUnlocking>=4 )
+                {
+                  cdp[2].run();
+                  if( (cdp[2].Ef==false||lock==false) && seqUnlocking==4 )//o soltar el click mucho despues o que termine el ultimo degrade e color del ultimo puntero haran guardar el tiempo auxiliar de desbloqueo
+                  {
+                    tLockedDelayed_1=millis();
+                    seqUnlocking=5;
+                  }
+                  enableUnlockingGuide=false;
+                  if( seqUnlocking==5 && (millis()-tLockedDelayed_1)>1000 )
+                  {
+                    locked=false;
+                  }
+                }
+                else
+                {
+                  seqUnlocking=1;
+                }
+              }
+              tGoBackLock_1=millis();
+            }
+            
+            if( locked==false && (millis()-tGoBackLock_1)>=tGoBackLock )
+            {
+              locked=true;
+              seqUnlocking=1;
+              rFS=255;
+              gFS=255;
+              bFS=200;
+              aFS=255;
+              cdp[0].reset();
+                cdp[1].reset();
+                cdp[2].reset();
+                tLocked_1=millis();
+              enableUnlockingGuide=true;
+            }
+          }
+          
+          public void unlockingGuide()//para mostrar la guia por donde debe pasar el puntero
+          { 
+            //mouseOn();
+            if( enableUnlockingGuide )
+            {
+              if( corrimientoTransparenciaLocked<(millis()-tLocked_1) && (millis()-tLocked_1)<=(corrimientoTransparenciaLocked+periodoTransparenciaLocked) )//agregar circulo con transparencia variable
+              {
+                fill(0,0,255,-(255/2)*cos(PI*((millis()-tLocked_1)-corrimientoTransparenciaLocked)/periodoTransparenciaLocked)+(255/2));
+                ellipse(x+radius/2, (y+h)-radius/2, radius, radius);
+              }
+              else
+              {
+                fill(0,0,255);
+                //ellipse(x+radius/2, (y+h)-radius/2, radius, radius);
+              }
+              
+              if( (corrimientoLocked+periodoLocked*3)<(millis()-tLocked_1) && (millis()-tLocked_1)<=(corrimientoLocked+periodoLocked*3 + periodoTransparenciaLocked) )//agregar transparencia cuando se termine el recorrido
+              {
+                fill(0,0,255,(255/2)*cos(PI*((millis()-tLocked_1)-(corrimientoLocked+periodoLocked*3))/periodoTransparenciaLocked)+(255/2));
+                ellipse(x+w-radius/2, (y)+radius/2, radius, radius);
+              }
+              
+              if( corrimientoLocked<(millis()-tLocked_1) && (millis()-tLocked_1)<=(corrimientoLocked+periodoLocked) )//primer recorido de la esfera
+              {
+                ellipse(map(-(w/2)/2*cos(PI*((millis()-tLocked_1)-corrimientoLocked)/periodoLocked )+(w/2)/2, 0, w/2, x+radius/2, (x+w/2)), (y+h)-radius/2, radius, radius);
+              }
+              if( (corrimientoLocked+periodoLocked)<(millis()-tLocked_1) && (millis()-tLocked_1)<=(corrimientoLocked+periodoLocked*2) )//segundo recorido de la esfera
+              {
+                ellipse((x+w/2), map(-(h/2)/2*cos(PI*((millis()-tLocked_1)-(corrimientoLocked+periodoLocked))/periodoLocked)+(h/2)/2, 0, h/2, (y+h)-radius/2, (y)+radius/2), radius, radius);
+              }
+              if( (corrimientoLocked+periodoLocked*2)<(millis()-tLocked_1) && (millis()-tLocked_1)<=(corrimientoLocked+periodoLocked*3) )//tercer recorido de la esfera
+              {
+                ellipse(map(-(w/2)/2*cos(PI*((millis()-tLocked_1)-(corrimientoLocked+periodoLocked*2))/periodoLocked)+(w/2)/2, 0, w/2, (x+w/2), x+w-radius/2), (y)+radius/2, radius, radius);
+              }
+              
+              if( (millis()-tLocked_1)>=(corrimientoLocked+periodoLocked*3 + periodoTransparenciaLocked) )//reinicio de variables tiempo para hacer el recorrido cada vez que acabe el anterior
+              {
+                tLocked_1=millis();
+              }
+            }
+            else
+            {
+              tLocked_1=millis();
+            }
+          }
+          
+          void fingerTracking()
+          {
+            cdp[0].run();
+            cdp[1].run();
+            cdp[2].run();
+            fill(rF, gF, bF, aF);
+            if( 0<=mouseX && mouseX<=(x+w/2) && seqUnlocking==1 )
+            {
+              ellipse(constrain(mouseX, x+radius/2,x+w/2) , (y+h)-radius/2, radius, radius);//limitar el movimiento del mouse entre la barra 1 del slider
+            }
+            if( ((pow(mouseX-((x+w/2)),2)+pow(mouseY-((y+h)-radius/2),2))<=pow(radius/2,2)) && seqUnlocking==1 )
+            {
+              seqUnlocking=2;
+            }
+            if( (y+h)-radius/2-(h-radius)<=mouseY && mouseY<=(y+h)-radius/2 && seqUnlocking==2 )
+            {
+              cdp[0].Ei=true;
+              cdp[2].reset();
+              fill(rF, gF, bF, aF);
+              ellipse( (x+w/2), constrain(mouseY, (y+h)-radius/2-(h-radius),(y+h)-radius/2), radius, radius);//limitar el movimiento del mouse entre la barra 2 del slider
+            }
+            if( ((pow(mouseX-((x+w/2)),2)+pow(mouseY-((y)+radius/2),2))<=pow(radius/2,2)) && seqUnlocking==2 )
+            {
+              seqUnlocking=3;
+            }
+            if( (x+w/2)<=mouseX && mouseX<=(x+w) && seqUnlocking==3 )
+            {
+              cdp[1].Ei=true;
+              fill(rF, gF, bF, aF);
+              ellipse(constrain(mouseX, (x+w/2),(x+w/2)+(w)/2-radius/2) , (y)+radius/2, radius, radius);//limitar el movimiento del mouse entre la barra 3 del slider
+            }
+            if( ((pow(mouseX-(x+w-radius/2),2)+pow(mouseY-((y)+radius/2),2))<=pow(radius/2,2)) && seqUnlocking==3 )
+            {
+              seqUnlocking=4;
+              cdp[2].Ei=true;
+              rFS=10;
+              gFS=200;
+              bFS=80;
+              aFS=255;
+              fill(rF, gF, bF, aF);
+              //tLockedDelayed_1=millis();
+              //locked=false;
+            }
+          }
+        }
+    </script>
+
+    <canvas id="sketch" style="border: 1px solid black;"></canvas>
+</body>
+
+</html>
